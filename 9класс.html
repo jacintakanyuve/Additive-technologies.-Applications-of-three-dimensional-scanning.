@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Технология 9 класс: Аддитивные технологии и 3D-сканирование</title>
+  <style>
+    :root {
+      --bg: #f3f4f6;
+      --surface: #ffffff;
+      --surface-soft: #f8fafc;
+      --primary: #6366f1;
+      --primary-dark: #4f46e5;
+      --primary-light: #e0e7ff;
+      --accent: #ec4899;
+      --success: #10b981;
+      --success-light: #d1fae5;
+      --warning: #f59e0b;
+      --warning-light: #fef3c7;
+      --danger: #ef4444;
+      --danger-light: #fee2e2;
+      --text: #1f2937;
+      --text-muted: #6b7280;
+      --border: #e5e7eb;
+      --radius: 16px;
+      --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      padding-bottom: 60px;
+    }
+
+    /* Навигация и прогресс-бар */
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(8px);
+      border-bottom: 1px solid var(--border);
+      padding: 12px 16px;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    }
+    .topbar-inner { max-width: 800px; margin: 0 auto; }
+    .topbar-row { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 10px; }
+    
+    .badge {
+      background: var(--primary-light);
+      color: var(--primary-dark);
+      font-weight: 700;
+      font-size: 0.85rem;
+      padding: 4px 12px;
+      border-radius: 999px;
+    }
+    .timer-box {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      background: var(--surface-soft);
+      padding: 4px 12px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+    }
+    .progress-track { width: 100%; height: 8px; background: #e5e7eb; border-radius: 999px; overflow: hidden; }
+    .progress-fill { height: 100%; width: 0%; background: linear-gradient(90deg, var(--primary), var(--accent)); transition: width 0.4s ease; }
+    
+    .nav-pills { display: flex; gap: 8px; overflow-x: auto; padding-top: 12px; scrollbar-width: none; }
+    .nav-pills::-webkit-scrollbar { display: none; }
+    .nav-pill {
+      border: 1px solid var(--border); background: var(--surface); color: var(--text-muted);
+      padding: 6px 14px; border-radius: 999px; font-size: 0.85rem; font-weight: 600;
+      cursor: pointer; white-space: nowrap; transition: all 0.2s;
+    }
+    .nav-pill.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+    .nav-pill.done { border-color: var(--success); color: var(--success); background: var(--success-light); }
+    .nav-pill.active.done { background: var(--success); color: #fff; }
+
+    .container { max-width: 800px; margin: 24px auto 0; padding: 0 16px; }
+
+    .card {
+      background: var(--surface); border-radius: var(--radius);
+      box-shadow: var(--shadow); padding: 24px; margin-bottom: 24px;
+    }
+
+    .module { display: none; animation: fadeIn 0.3s ease; }
+    .module.active { display: block; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+    h1 { font-size: 1.5rem; line-height: 1.3; margin-bottom: 12px; }
+    h2 { font-size: 1.25rem; margin-bottom: 12px; color: var(--primary-dark); }
+    h3 { font-size: 1.1rem; margin: 16px 0 8px; }
+    p { margin-bottom: 12px; }
+
+    .time-tag {
+      display: inline-block; font-size: 0.8rem; font-weight: 700; color: var(--accent);
+      background: #fdf2f8; padding: 4px 10px; border-radius: 8px; margin-bottom: 12px;
+    }
+
+    .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin: 16px 0; }
+    
+    .info-box { background: var(--surface-soft); border: 1px solid var(--border); border-radius: 12px; padding: 16px; }
+    .info-box strong { display: block; margin-bottom: 8px; color: var(--primary-dark); font-size: 1.05rem; }
+
+    /* Интерактивные зоны */
+    .interactive-zone {
+      background: #f8fafc; border: 2px dashed #a5b4fc; border-radius: var(--radius);
+      padding: 20px; margin-top: 20px;
+    }
+    .interactive-title { font-weight: 800; font-size: 1.1rem; color: var(--primary-dark); margin-bottom: 12px; }
+
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+      background: var(--primary); color: #fff; border: none; border-radius: 10px;
+      padding: 10px 20px; font-size: 0.95rem; font-weight: 600; cursor: pointer; transition: 0.2s;
+    }
+    .btn:hover { background: var(--primary-dark); }
+    .btn-secondary { background: #e5e7eb; color: var(--text); }
+    .btn-secondary:hover { background: #d1d5db; }
+    .btn-success { background: var(--success); }
+    .btn-success:hover { background: #059669; }
+    .btn-sm { padding: 8px 14px; font-size: 0.85rem; }
+
+    .nav-footer {
+      display: flex; justify-content: space-between; align-items: center; gap: 12px;
+      margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--border);
+    }
+
+    input.field {
+      width: 100%; padding: 10px 14px; border: 1px solid var(--border);
+      border-radius: 10px; font-size: 1rem; margin-bottom: 12px;
+    }
+
+    /* Сортировка (Модуль 1) - Обновленные стили */
+    .sort-item {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 12px;
+    }
+    
+    .sort-item > div:first-child {
+      margin-bottom: 12px;
+      font-size: 0.95rem;
+      line-height: 1.5;
+    }
+    
+    .sort-item > div:last-child {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    
+    .choice-btn {
+      background: var(--surface-soft);
+      color: var(--text);
+      border: 1px solid var(--border);
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      margin: 0;
+    }
+    
+    .choice-btn:hover { background: var(--border); }
+    .choice-btn.selected { background: var(--primary); color: #fff; border-color: var(--primary); }
+    .choice-btn.correct { background: var(--success); color: #fff; border-color: var(--success); }
+    .choice-btn.wrong { background: var(--danger); color: #fff; border-color: var(--danger); }
+
+    /* Цепочка (Модуль 3) */
+    .order-item {
+      padding: 12px; margin-bottom: 8px; background: var(--surface); border: 1px solid var(--border);
+      border-radius: 8px; cursor: pointer; transition: 0.2s; text-align: center; font-weight: 600; color: var(--text);
+    }
+    .order-item:hover { background: var(--primary-light); }
+    .order-item.selected { background: var(--primary); color: #fff; border-color: var(--primary-dark); }
+    .order-slot {
+      padding: 12px; margin-bottom: 8px; background: var(--surface-soft); border: 2px dashed var(--border);
+      border-radius: 8px; text-align: center; color: var(--text-muted); font-size: 0.9rem;
+    }
+    .order-slot.filled { background: var(--success-light); border-style: solid; border-color: var(--success); color: var(--success); font-weight: 600; }
+
+    /* Тест (Модуль 4) */
+    .quiz-q { margin-bottom: 16px; padding: 16px; background: var(--surface-soft); border-radius: 12px; }
+    .quiz-opt { display: block; width: 100%; text-align: left; padding: 10px 14px; margin-top: 8px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); color: var(--text); cursor: pointer; }
+    .quiz-opt.selected { border-color: var(--primary); background: var(--primary-light); font-weight: 600; }
+    .quiz-opt.correct { border-color: var(--success); background: var(--success-light); color: #064e3b; font-weight: 700; }
+    .quiz-opt.wrong { border-color: var(--danger); background: var(--danger-light); color: #7f1d1d; }
+
+    /* Сертификат */
+    .cert-box { border: 3px solid var(--primary); background: linear-gradient(135deg, #ffffff 0%, #e0e7ff 100%); border-radius: 20px; padding: 30px 20px; text-align: center; margin-top: 20px; }
+    .cert-grade { display: inline-block; font-size: 1.6rem; font-weight: 800; color: var(--success); background: var(--success-light); padding: 8px 24px; border-radius: 12px; margin: 16px 0; }
+  </style>
+</head>
+<body>
+
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="topbar-row">
+        <span class="badge">Технология • 9 класс</span>
+        <span class="timer-box" id="timerDisplay">00:00 / 45:00</span>
+      </div>
+      <div class="progress-track">
+        <div class="progress-fill" id="progressBar"></div>
+      </div>
+      <nav class="nav-pills" id="navPills">
+        <button class="nav-pill active" onclick="goToStep(0)">Старт</button>
+        <button class="nav-pill" onclick="goToStep(1)">1. Аддитивные технологии</button>
+        <button class="nav-pill" onclick="goToStep(2)">2. 3D-сканирование</button>
+        <button class="nav-pill" onclick="goToStep(3)">3. Области применения</button>
+        <button class="nav-pill" onclick="goToStep(4)">4. Итоговый тест</button>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+
+    <!-- ШАГ 0: ВВЕДЕНИЕ -->
+    <section class="module active" id="step-0">
+      <div class="card">
+        <span class="time-tag">Самостоятельный урок • 45 минут</span>
+        <h1>Аддитивные технологии и 3D-сканирование</h1>
+        <p>На этом уроке мы разберёмся, как современное производство переходит от «отсекания лишнего» к выращиванию деталей слой за слоем, и как лазерные сканеры помогают переносить физические объекты в цифровой мир.</p>
+        
+        <div class="info-box" style="margin-bottom: 20px;">
+          <strong>🎯 Твоя задача:</strong>
+          Внимательно изучи 3 коротких модуля теории, выполни интерактивные задания и сдай итоговый тест. Карточку с результатом отправь учителю.
+        </div>
+
+        <label><strong>Введи фамилию, имя и класс:</strong></label>
+        <input type="text" id="studentNameInput" class="field" placeholder="Например: Петров Иван, 9-А" />
+
+        <div class="nav-footer">
+          <span></span>
+          <button class="btn" onclick="startLesson()">Начать урок →</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ШАГ 1: АДДИТИВНЫЕ ТЕХНОЛОГИИ -->
+    <section class="module" id="step-1">
+      <div class="card">
+        <span class="time-tag">Модуль 1 • Теория и практика (10 мин)</span>
+        <h2>1. Суть аддитивных технологий</h2>
+        <p>Слово «аддитивный» происходит от латинского <em>addere</em> — добавлять. Это принципиально новый подход к производству.</p>
+        
+        <div class="grid-2">
+          <div class="info-box" style="border-left: 4px solid var(--danger);">
+            <strong>Традиционные (Субтрактивные)</strong>
+            Берётся заготовка (кусок металла или дерева) и от неё отсекается всё лишнее. Примеры: работа на токарном станке, фрезеровка, резьба. Огромный минус — много отходов (стружки).
+          </div>
+          <div class="info-box" style="border-left: 4px solid var(--success);">
+            <strong>Аддитивные (3D-печать)</strong>
+            Деталь создаётся с нуля путём добавления материала <strong>слой за слоем</strong> по 3D-модели. Отходов практически нет, можно создавать детали со сложными внутренними полостями.
+          </div>
+        </div>
+
+        <h3>Основные виды 3D-печати:</h3>
+        <ul>
+          <li><strong>FDM (FDM/FFF)</strong> — послойное наплавление пластиковой нити. Самый популярный метод, используется в школьных и домашних принтерах.</li>
+          <li><strong>SLA / LCD</strong> — засветка жидкой фотополимерной смолы ультрафиолетом. Даёт высочайшую детализацию.</li>
+          <li><strong>SLS / SLM</strong> — лазерное спекание порошка (пластикового или металлического). Применяется в авиации и медицине.</li>
+        </ul>
+
+        <div class="interactive-zone">
+          <div class="interactive-title">Тренажёр: Определи тип производства</div>
+          <p style="font-size: 0.9rem; margin-bottom: 10px;">Для каждого процесса выбери, является ли он аддитивным (добавление) или субтрактивным (отсекание).</p>
+          <div id="sortContainer"></div>
+          <button class="btn btn-sm" onclick="checkSortTask()" style="margin-top: 10px;">Проверить ответы</button>
+          <div id="sortFeedback" style="margin-top:8px; font-weight:600; font-size:0.9rem;"></div>
+        </div>
+
+        <div class="nav-footer">
+          <button class="btn btn-secondary" onclick="goToStep(0)">← Назад</button>
+          <button class="btn" onclick="markStepDone(1); goToStep(2)">Дальше: 3D-сканирование →</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ШАГ 2: 3D-СКАНИРОВАНИЕ -->
+    <section class="module" id="step-2">
+      <div class="card">
+        <span class="time-tag">Модуль 2 • Теория (10 мин)</span>
+        <h2>2. Что такое 3D-сканирование?</h2>
+        <p><strong>3D-сканирование</strong> — это процесс анализа физического объекта для создания его точной цифровой 3D-копии.</p>
+        
+        <p>Как это работает? Современные сканеры проецируют на объект лазерные лучи или сетку света (структурированный свет) и считывают их искажение камерами. Процесс оцифровки проходит в 3 этапа:</p>
+        
+        <div class="grid-2">
+          <div class="info-box">
+            <strong>1. Облако точек (Point Cloud)</strong><br>
+            Сканер фиксирует миллионы точек на поверхности объекта в пространстве координат X, Y, Z.
+          </div>
+          <div class="info-box">
+            <strong>2. Полигональная сетка (Mesh)</strong><br>
+            Программа соединяет точки треугольниками, образуя сплошную поверхность (похожую на гранёную модель). Формат файла — .STL или .OBJ.
+          </div>
+        </div>
+
+        <div class="info-box" style="background-color: var(--primary-light); margin-top: 12px;">
+          <strong>💡 А знаете ли вы?</strong><br>
+          Современные оптические сканеры (например, портативные модели) могут сканировать объекты с точностью до 0.02 мм, что тоньше человеческого волоса! А если использовать фотограмметрию, то 3D-модель здания можно создать по сотне фотографий с квадрокоптера.
+        </div>
+
+        <div class="nav-footer">
+          <button class="btn btn-secondary" onclick="goToStep(1)">← Назад</button>
+          <button class="btn" onclick="markStepDone(2); goToStep(3)">Дальше: Области применения →</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ШАГ 3: ОБЛАСТИ ПРИМЕНЕНИЯ И РЕВЕРС-ИНЖИНИРИНГ -->
+    <section class="module" id="step-3">
+      <div class="card">
+        <span class="time-tag">Модуль 3 • Теория и практика (15 мин)</span>
+        <h2>3. Где это применяется и что такое Реверс-инжиниринг?</h2>
+        <p>Связка «3D-сканер + 3D-принтер» произвела революцию во многих сферах:</p>
+
+        <ul>
+          <li><strong>Медицина:</strong> Сканирование челюсти для создания индивидуальных брекетов; сканирование культи для печати идеального протеза.</li>
+          <li><strong>Сохранение наследия:</strong> Оцифровка статуй и музейных экспонатов для создания виртуальных музеев.</li>
+          <li><strong>Контроль качества:</strong> Отсканированную на заводе деталь накладывают на идеальный чертёж в компьютере, чтобы найти брак геометрии (доли миллиметра).</li>
+        </ul>
+
+        <h3>Обратное проектирование (Reverse Engineering)</h3>
+        <p>Обычно деталь сначала чертят в САПР, а потом производят. Обратное проектирование идёт в обратную сторону: у нас есть готовая сломанная деталь (например, редкая шестерня от станка), нет чертежей, и нам нужно сделать её копию.</p>
+
+        <div class="interactive-zone">
+          <div class="interactive-title">Симулятор: Собери цепочку реверс-инжиниринга</div>
+          <p style="font-size: 0.9rem; margin-bottom: 10px;">Кликай по блокам в правильном порядке, чтобы восстановить сломанную деталь. Если ошибся — нажми "Сбросить".</p>
+          
+          <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px;" id="orderItemsBox">
+            <!-- Элементы генерируются через JS -->
+          </div>
+
+          <div style="display: flex; flex-direction: column; gap: 8px;" id="slotsBox">
+            <div class="order-slot" id="slot-0">Шаг 1</div>
+            <div class="order-slot" id="slot-1">Шаг 2</div>
+            <div class="order-slot" id="slot-2">Шаг 3</div>
+            <div class="order-slot" id="slot-3">Шаг 4</div>
+          </div>
+          
+          <div style="margin-top: 12px; display: flex; gap: 10px;">
+            <button class="btn btn-sm btn-secondary" onclick="resetOrder()">Сбросить</button>
+            <button class="btn btn-sm" onclick="checkOrderTask()">Проверить</button>
+          </div>
+          <div id="orderFeedback" style="margin-top:8px; font-weight:600; font-size:0.9rem;"></div>
+        </div>
+
+        <div class="nav-footer">
+          <button class="btn btn-secondary" onclick="goToStep(2)">← Назад</button>
+          <button class="btn" onclick="markStepDone(3); goToStep(4)">Перейти к итоговому тесту →</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ШАГ 4: ТЕСТ И СЕРТИФИКАТ -->
+    <section class="module" id="step-4">
+      <div class="card">
+        <span class="time-tag">Модуль 4 • Итог (10 мин)</span>
+        <h2>4. Итоговый тест</h2>
+        <p>Ответь на 6 вопросов, чтобы закрепить материал и получить оценку.</p>
+
+        <div id="quizContainer"></div>
+        
+        <button class="btn btn-success" style="width:100%; margin-top:20px;" onclick="finishLesson()">Сдать тест и получить оценку</button>
+
+        <div id="certSection" style="display: none;">
+          <div class="cert-box">
+            <div style="font-size:0.9rem; text-transform:uppercase; color:var(--text-muted); font-weight:700;">
+              Электронный отчёт • Технология 9 класс
+            </div>
+            <h2 id="cName" style="margin:10px 0; color:var(--text);">Ученик</h2>
+            <p>Тема: «Аддитивные технологии и 3D-сканирование»</p>
+            <div class="cert-grade" id="cGrade">Оценка: 5</div>
+            <p id="cStats" style="font-weight:600;"></p>
+            <p style="font-size:0.85rem; color:var(--text-muted); margin-top:8px;">
+              Код проверки: <span id="cCode" style="font-family:monospace;"></span>
+            </p>
+            <p style="color: var(--danger); font-weight: bold; margin-top: 16px;">
+              📸 Сделай скриншот этого блока и отправь учителю!
+            </p>
+          </div>
+        </div>
+
+        <div class="nav-footer">
+          <button class="btn btn-secondary" onclick="goToStep(3)">← Вернуться к теории</button>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <script>
+    const state = { step: 0, done: [false,false,false,false,false], time: 0, name: "" };
+
+    // Таймер
+    setInterval(() => {
+      state.time++;
+      const m = String(Math.floor(state.time / 60)).padStart(2, "0");
+      const s = String(state.time % 60).padStart(2, "0");
+      document.getElementById("timerDisplay").textContent = `${m}:${s} / 45:00`;
+    }, 1000);
+
+    // Навигация
+    function goToStep(idx) {
+      document.querySelectorAll(".module").forEach((el, i) => el.classList.toggle("active", i === idx));
+      document.querySelectorAll(".nav-pill").forEach((el, i) => {
+        el.classList.toggle("active", i === idx);
+        el.classList.toggle("done", state.done[i]);
+      });
+      state.step = idx;
+      document.getElementById("progressBar").style.width = `${Math.min(100, Math.round((state.done.filter(Boolean).length / 4)*100))}%`;
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+
+    function markStepDone(idx) { state.done[idx] = true; updateNav(); }
+    function updateNav() {
+      document.querySelectorAll(".nav-pill").forEach((el, i) => el.classList.toggle("done", state.done[i]));
+      document.getElementById("progressBar").style.width = `${Math.min(100, Math.round((state.done.filter(Boolean).length / 4)*100))}%`;
+    }
+
+    function startLesson() {
+      state.name = document.getElementById("studentNameInput").value.trim() || "Ученик 9 класса";
+      markStepDone(0); goToStep(1);
+    }
+
+    // Интерактив 1: Сортировка
+    const sortTasks = [
+      { t: "Токарная обработка (снятие стружки с цилиндра)", a: "Субтрактивная" },
+      { t: "FDM 3D-печать (наплавление пластика)", a: "Аддитивная" },
+      { t: "Фрезерование на станке с ЧПУ", a: "Субтрактивная" },
+      { t: "Лазерное спекание металлического порошка", a: "Аддитивная" }
+    ];
+    const sortAns = {};
+
+    function initSort() {
+      const box = document.getElementById("sortContainer");
+      sortTasks.forEach((tsk, i) => {
+        let h = `<div class="sort-item">
+          <div><strong>${i+1}.</strong> ${tsk.t}</div>
+          <div id="sortBtns-${i}">
+            <button class="choice-btn" onclick="selSort(${i}, 'Аддитивная')">Аддитивная</button>
+            <button class="choice-btn" onclick="selSort(${i}, 'Субтрактивная')">Субтрактивная</button>
+          </div>
+        </div>`;
+        box.innerHTML += h;
+      });
+    }
+    
+    function selSort(i, val) {
+      sortAns[i] = val;
+      const btns = document.getElementById(`sortBtns-${i}`).querySelectorAll('.choice-btn');
+      btns.forEach(b => {
+        b.classList.remove('selected', 'correct', 'wrong');
+        if(b.textContent === val) b.classList.add('selected');
+      });
+    }
+    
+    function checkSortTask() {
+      let score = 0;
+      sortTasks.forEach((tsk, i) => {
+        const val = sortAns[i];
+        const btns = document.getElementById(`sortBtns-${i}`).querySelectorAll('.choice-btn');
+        btns.forEach(b => {
+          b.classList.remove('selected', 'correct', 'wrong');
+          if(b.textContent === val) {
+            if(val === tsk.a) { b.classList.add('correct'); score++; }
+            else { b.classList.add('wrong'); }
+          }
+        });
+      });
+      const fb = document.getElementById("sortFeedback");
+      if(score === sortTasks.length) { fb.style.color = "var(--success)"; fb.textContent = "Отлично! Всё верно."; }
+      else { fb.style.color = "var(--danger)"; fb.textContent = `Верно: ${score} из 4. Исправь ошибки.`; }
+    }
+
+    // Интерактив 2: Цепочка (Реверс-инжиниринг)
+    const orderItems = [
+      { id: "o1", t: "3D-сканирование физической детали" },
+      { id: "o2", t: "Создание твердотельной CAD-модели на основе сетки" },
+      { id: "o3", t: "Получение полигональной сетки (Mesh)" },
+      { id: "o4", t: "3D-печать новой детали" }
+    ];
+    // Правильный порядок: o1 -> o3 -> o2 -> o4
+    const correctOrder = ["o1", "o3", "o2", "o4"];
+    let currentOrder = [];
+
+    function initOrder() {
+      const box = document.getElementById("orderItemsBox");
+      box.innerHTML = "";
+      // Перемешаем для старта
+      const shuffled = [...orderItems].sort(() => Math.random() - 0.5);
+      shuffled.forEach(item => {
+        box.innerHTML += `<div class="order-item" id="item-${item.id}" onclick="addToOrder('${item.id}', '${item.t}')">${item.t}</div>`;
+      });
+    }
+
+    function addToOrder(id, text) {
+      if(currentOrder.length >= 4 || currentOrder.includes(id)) return;
+      currentOrder.push(id);
+      document.getElementById(`item-${id}`).style.display = "none";
+      
+      const slotIndex = currentOrder.length - 1;
+      const slot = document.getElementById(`slot-${slotIndex}`);
+      slot.classList.add('filled');
+      slot.textContent = `${slotIndex + 1}. ${text}`;
+    }
+
+    function resetOrder() {
+      currentOrder = [];
+      document.querySelectorAll('.order-item').forEach(el => el.style.display = "block");
+      for(let i=0; i<4; i++) {
+        const slot = document.getElementById(`slot-${i}`);
+        slot.classList.remove('filled', 'wrong');
+        slot.style.borderColor = "";
+        slot.textContent = `Шаг ${i+1}`;
+      }
+      document.getElementById("orderFeedback").textContent = "";
+    }
+
+    function checkOrderTask() {
+      if(currentOrder.length < 4) {
+        document.getElementById("orderFeedback").style.color = "var(--warning)";
+        document.getElementById("orderFeedback").textContent = "Сначала расставь все 4 шага!";
+        return;
+      }
+      let correctCount = 0;
+      for(let i=0; i<4; i++) {
+        const slot = document.getElementById(`slot-${i}`);
+        if(currentOrder[i] === correctOrder[i]) {
+          slot.style.borderColor = "var(--success)";
+          correctCount++;
+        } else {
+          slot.style.borderColor = "var(--danger)";
+        }
+      }
+      const fb = document.getElementById("orderFeedback");
+      if(correctCount === 4) {
+        fb.style.color = "var(--success)"; fb.textContent = "Логика абсолютно верна!";
+      } else {
+        fb.style.color = "var(--danger)"; fb.textContent = "Есть ошибки. Красные шаги стоят не на своём месте. Сбрось и попробуй снова.";
+      }
+    }
+
+    // Тест
+    const questions = [
+      { q: "1. В чём главное отличие аддитивных технологий от субтрактивных?", o: ["Они работают быстрее", "Деталь создаётся путём добавления материала, а не отсекания", "Они используют только металл"], c: 1 },
+      { q: "2. Что создаёт 3D-сканер на первом этапе оцифровки объекта?", o: ["G-code", "Облако точек", "Фотографию в формате JPEG"], c: 1 },
+      { q: "3. Как называется процесс воссоздания чертежа/модели по готовой физической детали?", o: ["Реверс-инжиниринг (обратное проектирование)", "Фрезерование", "Полигональное моделирование"], c: 0 },
+      { q: "4. Для чего 3D-сканирование используют в медицине?", o: ["Для диагностики простуды", "Для создания индивидуальных протезов и брекетов", "Для печати таблеток"], c: 1 },
+      { q: "5. Какой формат файлов обычно получается после 3D-сканирования (сетка)?", o: ["DOCX", "STL или OBJ", "MP3"], c: 1 },
+      { q: "6. Технология FDM (наплавление нити) относится к:", o: ["Субтрактивным технологиям", "Аддитивным технологиям", "Оптическим технологиям"], c: 1 }
+    ];
+    const userAnswers = {};
+
+    function renderQuiz() {
+      const box = document.getElementById("quizContainer");
+      questions.forEach((q, qI) => {
+        let h = `<div class="quiz-q"><strong>${q.q}</strong><div id="qOpts-${qI}">`;
+        q.o.forEach((opt, oI) => { h += `<button class="quiz-opt" onclick="selQuiz(${qI}, ${oI})">${opt}</button>`; });
+        box.innerHTML += h + `</div></div>`;
+      });
+    }
+
+    function selQuiz(qI, oI) {
+      userAnswers[qI] = oI;
+      const opts = document.getElementById(`qOpts-${qI}`).querySelectorAll('.quiz-opt');
+      opts.forEach(el => el.classList.remove('selected'));
+      opts[oI].classList.add('selected');
+    }
+
+    function finishLesson() {
+      if(Object.keys(userAnswers).length < questions.length) { alert("Ответь на все 6 вопросов!"); return; }
+      
+      let score = 0;
+      questions.forEach((q, qI) => {
+        const chosen = userAnswers[qI];
+        const opts = document.getElementById(`qOpts-${qI}`).querySelectorAll('.quiz-opt');
+        opts.forEach((el, oI) => {
+          el.classList.remove('selected','correct','wrong');
+          if(oI === q.c) el.classList.add('correct');
+          else if(oI === chosen && chosen !== q.c) el.classList.add('wrong');
+        });
+        if(chosen === q.c) score++;
+      });
+
+      let grade = 2;
+      if (score >= 6) grade = 5; else if (score >= 4) grade = 4; else if (score >= 3) grade = 3;
+
+      document.getElementById("cName").textContent = state.name;
+      document.getElementById("cGrade").textContent = `Оценка: ${grade}`;
+      document.getElementById("cStats").textContent = `Верных ответов: ${score} из 6 • Время: ~${Math.max(1, Math.round(state.time/60))} мин`;
+      document.getElementById("cCode").textContent = `ADD9-${score}${grade}-${new Date().getDate()}${new Date().getMonth()+1}`;
+      
+      document.getElementById("certSection").style.display = "block";
+      document.getElementById("certSection").scrollIntoView({ behavior: "smooth" });
+      markStepDone(4);
+    }
+
+    // Инициализация
+    initSort();
+    initOrder();
+    renderQuiz();
+  </script>
+</body>
+</html>
